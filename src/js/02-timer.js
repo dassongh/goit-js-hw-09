@@ -1,4 +1,5 @@
 import flatpickr from "flatpickr";
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import "flatpickr/dist/flatpickr.min.css";
 
 const refs = {
@@ -9,32 +10,41 @@ const refs = {
   seconds: document.querySelector('[data-seconds]'),
 }
 
-let chosenDate = null;
-let countDownDate = null;
+let countDownDate = 1243346436;
 
 refs.start.disabled = true;
 
+const options = {
+  enableTime: true,
+  time_24hr: true,
+  defaultDate: new Date(),
+  minuteIncrement: 1,
+  onClose(selectedDates) {
+    if (Date.now() >= selectedDates[0].getTime()) return Notify.failure('Please choose a date in the future', { width: '400px' });
+    refs.start.disabled = false;
+    countDownDate = selectedDates[0].getTime();
+    timer.init()
+  },
+};
+
+const fp = flatpickr("#datetime-picker", options);
+
 class Timer {
   constructor({ onTick }) {
-    this.isActive = false;
     this.onTick = onTick;
   }
   
   init() {
-    const time = this.convertMs(chosenDate);
+    const time = this.convertMs(countDownDate - Date.now());
     this.onTick(time);
   }
   
   start() {
-    if (this.isActive) return;
-    
     const startTime = countDownDate;
-    this.isActive = true;
     
     this.intervalId = setInterval(() => {
       const currentTime = Date.now();
       const deltaTime = startTime - currentTime;
-      console.log(deltaTime)
       const time = this.convertMs(deltaTime);
       
       this.onTick(time);
@@ -47,40 +57,25 @@ class Timer {
     const hour = minute * 60;
     const day = hour * 24;
     
-    const days = Math.floor(ms / day);
-    const hours = Math.floor((ms % day) / hour);
-    const minutes = Math.floor(((ms % day) % hour) / minute);
-    const seconds = Math.floor((((ms % day) % hour) % minute) / second);
+    const days = this.pad(Math.floor(ms / day));
+    const hours = this.pad(Math.floor((ms % day) / hour));
+    const minutes = this.pad(Math.floor(((ms % day) % hour) / minute));
+    const seconds = this.pad(Math.floor((((ms % day) % hour) % minute) / second));
     
     return { days, hours, minutes, seconds };
   }
+
+  pad(value) {
+    return String(value).padStart(2, '0');
+  }
 }
 
-const options = {
-  enableTime: true,
-  time_24hr: true,
-  defaultDate: new Date(),
-  minuteIncrement: 1,
-  onClose(selectedDates) {
-    if (Date.now() >= selectedDates[0].getTime()) return alert('Please choose a date in the future');
-    refs.start.disabled = false;
-    chosenDate = selectedDates[0].getTime() - Date.now();
-    countDownDate = selectedDates[0].getTime();
-    timer.init()
-    console.log(chosenDate);
-    console.log(convert(chosenDate))
-  },
-};
-
-const fp = flatpickr("#datetime-picker", options);
-
-const timer = new Timer({ onTick: updateClockFace, });
+const timer = new Timer({ onTick: updateClockFace });
 
 refs.start.addEventListener('click', onStartClick);
 
 function onStartClick() {
   timer.start();
-  console.log(timer);
 }
 
 function updateClockFace({ days, hours, minutes, seconds }) {
