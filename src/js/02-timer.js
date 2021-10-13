@@ -84,5 +84,3 @@ function updateClockFace({ days, hours, minutes, seconds }) {
   refs.minutes.textContent = minutes;
   refs.seconds.textContent = seconds;
 }
-
-
