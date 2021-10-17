@@ -10,7 +10,7 @@ const refs = {
   seconds: document.querySelector('[data-seconds]'),
 }
 
-let countDownDate = 1243346436;
+let countDownDate = 0;
 
 refs.start.disabled = true;
 
